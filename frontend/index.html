@@ -1,0 +1,441 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERetriever</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400&display=swap');
+
+        body {
+            color: #5d5b5b;
+            user-select: none;
+            background-image: linear-gradient(lightblue, lightyellow);
+        }
+
+        input {
+            border: unset;
+        }
+
+        input:focus-visible {
+            outline: unset;
+        }
+
+        .sentence-input {
+            border-right: 1px solid #D9D9D9;
+        }
+
+        .big-title {
+            font-size: 30px;
+            font-family: 'Noto Sans', sans-serif;
+        }
+
+        @media (max-width: 576px) {
+            .big-title {
+                font-size: 22px;
+            }
+        }
+
+        .search-btn-wrapper {
+            background: #5d5b5b;
+            cursor: pointer;
+        }
+
+        .search-btn-wrapper:hover {
+            background: #6c6b6b;
+        }
+
+        .keywords-loading .spinner-border {
+            color: #cccccc !important;
+        }
+
+        .search-box {
+            background: #6497B1;
+        }
+
+        .search-btn {
+            background-image: url('https://static.vnncdn.net/v1/icon/otoxemay/search2.svg');
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            height: 25px;
+            width: 25px;
+        }
+
+        .btn-disabled {
+            cursor: unset;
+            opacity: .5;
+        }
+
+        .btn-disabled:hover {
+            background: #5d5b5b;
+        }
+
+        .title-box-item {
+            cursor: pointer;
+        }
+
+        .title-box-item.active {
+            background: #6497B1;
+            color: white;
+        }
+
+        .result-item.active {
+            outline: 1px solid #ccc;
+        }
+
+        .noted-sentence a {
+            color: #5d5b5b;
+            font-size: 18px;
+            font-style: italic;
+            text-decoration: unset;
+        }
+
+        .noted-sentence a:hover {
+            font-weight: 500;
+        }
+
+        .result-number {
+            font-size: 25px;
+            font-weight: bold;
+            color: #6497B1;
+        }
+
+        .detail-result-btn .btn {
+            background: #6497B1;
+            font-size: 12px;
+        }
+
+        .result-detail-box {
+            overflow: hidden;
+            overflow-y: auto;
+            max-height: 520px;
+            background: #f7f7f7;
+        }
+
+        .result-detail-item {
+            color: #000;
+        }
+
+        .detail-statistics {
+            font-size: 14px;
+            font-weight: bold;
+            color: #959595;
+        }
+
+        .statistic {
+            color: #5d5b5b;
+        }
+
+        .low-value {
+            color: #DC5D5D;
+        }
+
+        .high-value {
+            color: #6CBA94;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #b1b1b1;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7e7e7e;
+        }
+
+        .input-notification {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="container-fluid p-0">
+    <div class="big-title text-dark bg-white text-center py-4 text-dark">VERetriever: Vietnamese-English Cross-Lingual Online Evidence Retrieval for<br>
+        Combating Fake News in Healthcare
+    </div>
+    <div
+            class="search-box row mt-4 mt-md-5 col-11 col-md-10 col-lg-5 px-3 py-4 mx-auto d-flex rounded position-relative">
+        <div class="col-12 input-notification ps-0 text-white d-none position-absolute bottom-0 mb-0 pb-1">
+            Enter sentence to implement searching
+        </div>
+        <div class="col-12 col-md-6 p-0 mt-0">
+            <input class="w-100 sentence-input p-2" placeholder="Enter the statement">
+        </div>
+        <div class="col-12 col-md-5 p-0 mt-3 mt-md-0 position-relative">
+            <input class="w-100 p-2 keywords-input" placeholder="Enter/revise the keywords, separate by comma(,)">
+            <div class="position-absolute keywords-loading d-none top-50 end-0 me-2 translate-middle-y">
+                <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+        <div
+                class="col p-2 p-md-0 search-btn-wrapper mt-3 mt-md-0 d-flex align-items-center justify-content-center">
+            <div class="search-btn"></div>
+        </div>
+    </div>
+    <div
+            class="title-box p-0 px-md-4 col-11 col-md-10 mx-auto mt-5 d-flex align-items-center justify-content-between">
+        <div>
+            <div class="title-box-item support-tab active d-inline-block rounded py-1 px-3">Supporting news (<span
+                    class="support-result-number">0</span>)
+            </div>
+            <div class="title-box-item refuse-tab d-inline-block rounded py-1 px-3">Opposing news (<span
+                    class="refuse-result-number">0</span>)
+            </div>
+        </div>
+        <div class="loading-result d-none">
+            <div class="spinner-border spinner-border-sm text-secondary d-block d-md-none" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="spinner-grow spinner-grow-sm text-secondary d-none d-md-inline-block" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="spinner-grow spinner-grow-sm text-secondary d-none d-md-inline-block" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="spinner-grow spinner-grow-sm text-secondary d-none d-md-inline-block" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="spinner-grow spinner-grow-sm text-secondary d-none d-md-inline-block" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- <div class="row">
+    <div class="row col-6">
+        <div class="border row rounded p-3 d-flex justify-content-between">
+            <div class="col bg-secondary p-3 rounded"></div>
+            <div class="col-8 bg-secondary rounded"></div>
+            <div class="col bg-secondary rounded"></div>
+        </div>
+    </div>
+    <div class="row col-6">
+        <div>
+
+        </div>
+    </div>
+</div> -->
+
+    <div class="search-result-box mt-4">
+        <div class="support-page row">
+            <div class="result-list col-12 col-md-6"></div>
+            <div class="result-detail-box col-12 col-md-6 mt-2 mt-md-0 mb-4 mb-md-0"></div>
+        </div>
+        <div class="refuse-page row d-none">
+            <div class="result-list col-12 col-md-6"></div>
+            <div class="result-detail-box col-12 col-md-6 mt-2 mt-md-0 mb-4 mb-md-0"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+        $(document).ready(function () {
+            var apiUrl = 'BACKEND_HOST:PORT',
+                detaiSupportList = [],
+                detailRefuseList = [];
+
+            function addPointColor(point) {
+                if (point < 0.3) {
+                    return 'low-value';
+                } else if (point > 0.7) {
+                    return 'high-value';
+                } else {
+                    return '';
+                }
+            }
+
+            $(".support-tab, .refuse-tab").on('click', function () {
+                var t = $(this),
+                    isSupportTab = t.hasClass('support-tab');
+
+                t.addClass('active').siblings().removeClass('active');
+                $(isSupportTab ? '.support-page' : '.refuse-page').removeClass('d-none');
+                $(isSupportTab ? '.refuse-page' : '.support-page').addClass('d-none');
+            })
+
+            $(".search-btn").on('click', function () {
+
+                var sentence = $(".sentence-input").val().trim(),
+                    keywords = $('.keywords-input').val(),
+                    isDisabled = $(this).parent().hasClass("btn-disabled");
+
+                if (sentence && keywords && !isDisabled) {
+                    $('.input-notification').addClass('d-none');
+
+                    var stringKeywords = keywords.split(",");
+
+                    console.log(stringKeywords);
+
+                    $.ajax({
+                        url: apiUrl + '/find_evidence',
+                        type: 'POST',
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify({
+                            "post": sentence,
+                            "keywords": stringKeywords
+                        }),
+                        beforeSend: function () {
+                            $('.loading-result').removeClass("d-none");
+                        },
+                    }).done(function (data) {
+                        if (data) {
+                            var supportList = data.support,
+                                refuseList = data.refuse;
+
+                            detaiSupportList = [];
+                            detailRefuseList = [];
+                            $('.loading-result').addClass("d-none");
+                            $(".support-result-number").text(supportList.length);
+                            $(".refuse-result-number").text(refuseList.length);
+                            $('.support-page .result-list').empty();
+                            $('.refuse-page .result-list').empty();
+                            $.map(supportList, function (item, index) {
+                                detaiSupportList.push(item.notable_sentences);
+                                var itemTag = `<div
+                                    class="result-item result-item-support ${index == 0 ? 'active' : ''} rounded d-flex align-items-center justify-content-between shadow-sm p-3 mb-3">
+                                    <div class="result-number">${index + 1}</div>
+                                    <div class="ps-4 pe-2 noted-sentence">
+                                        <a href="${item.url}" target="_blank">${item.title}</a>
+                                    </div>
+                                    <div class="detail-result-btn mt-4" data-index=${index}>
+                                        <div class="btn btn-detail rounded text-white px-3 py-1">detail</div>
+                                    </div>
+                                </div>`;
+
+                                $('.support-page .result-list').append(itemTag);
+                            });
+                            $.map(refuseList, function (item, index) {
+                                detailRefuseList.push(item.notable_sentences);
+                                var itemTag = `<div
+                                    class="result-item result-item-refuse ${index == 0 ? 'active' : ''} rounded d-flex align-items-center justify-content-between shadow-sm p-3 mb-3">
+                                    <div class="result-number">${index + 1}</div>
+                                    <div class="ps-4 pe-2 noted-sentence">
+                                        <a href="${item.url}" target="_blank">${item.title}</a>
+                                    </div>
+                                    <div class="detail-result-btn mt-4" data-index=${index}>
+                                        <div class="btn rounded text-white px-3 py-1">detail</div>
+                                    </div>
+                                </div>`;
+
+                                $('.refuse-page .result-list').append(itemTag);
+                            });
+                            $(".result-item-support").on('click', function () {
+                                var t = $(this),
+                                    index = t.children(".detail-result-btn").data('index'),
+                                    totalNumber = detaiSupportList[index].length;
+
+                                $('.support-page .result-detail-box').empty();
+                                t.addClass('active').siblings().removeClass('active');
+                                $.map(detaiSupportList[index], function (item, index) {
+                                    var itemTag = `<div class="result-detail-item p-2 ${(index + 1) == totalNumber ? '' : 'border-bottom'} mb-2">
+                                        <div class="detail-noted-sentence">${item.text}</div>
+                                        <div class="detail-statistics d-flex justify-content-between mt-2">
+                                            <div>contradiction <div class="statistic ${addPointColor(item.entailment.contradiction.toFixed(8))}">${item.entailment.contradiction.toFixed(8)}</div></div>
+                                            <div>neutral <div class="statistic ${addPointColor(item.entailment.neutral.toFixed(8))}">${item.entailment.neutral.toFixed(8)}</div></div>
+                                            <div>entailment <div class="statistic ${addPointColor(item.entailment.entailment.toFixed(8))}">${item.entailment.entailment.toFixed(8)}</div></div>
+                                        </div>
+                                    </div>`;
+
+                                    $('.support-page .result-detail-box').append(itemTag);
+                                });
+                            });
+                            $(".result-item-support").eq(0).trigger("click");
+                            $(".result-item-refuse").on('click', function () {
+                                var t = $(this),
+                                    index = t.children(".detail-result-btn").data('index'),
+                                    totalNumber = detailRefuseList[index].length;
+
+                                $('.refuse-page .result-detail-box').empty();
+                                t.addClass('active').siblings().removeClass('active');
+                                $.map(detailRefuseList[index], function (item, index) {
+                                    var itemTag = `<div class="result-detail-item p-2 ${(index + 1) == totalNumber ? '' : 'border-bottom'} mb-2">
+                                        <div class="detail-noted-sentence">${item.text}</div>
+                                        <div class="detail-statistics d-flex justify-content-between mt-2">
+                                            <div>contradiction <div class="statistic ${addPointColor(item.entailment.contradiction.toFixed(8))}">${item.entailment.contradiction.toFixed(8)}</div></div>
+                                            <div>neutral <div class="statistic ${addPointColor(item.entailment.neutral.toFixed(8))}">${item.entailment.neutral.toFixed(8)}</div></div>
+                                            <div>entailment <div class="statistic ${addPointColor(item.entailment.entailment.toFixed(8))}">${item.entailment.entailment.toFixed(8)}</div></div>
+                                        </div>
+                                    </div>`;
+
+                                    $('.refuse-page .result-detail-box').append(itemTag);
+                                });
+                            });
+                            $(".result-item-refuse").eq(0).trigger("click");
+                            // console.log(detaiSupportList);
+                            // console.log(detailRefuseList);
+                        }
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        console.log();
+                    })
+                } else {
+                    $('.input-notification').removeClass('d-none');
+                }
+            });
+
+            $('.sentence-input').on("focusout", function () {
+                var value = $(this).val().trim(),
+                    keywordsInput = $('.keywords-input');
+
+                if (value) {
+                    $.ajax({
+                        url: apiUrl + '/extract_keywords',
+                        type: 'POST',
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify({
+                            "post": value
+                        }),
+                        beforeSend: function () {
+                            $('.search-btn').addClass("btn-disabled");
+                            $(".keywords-loading").removeClass("d-none");
+                        },
+                    }).done(function (data) {
+                        if (data?.keywords) {
+                            keywordsInput.val(data.keywords);
+                            $('.search-btn').removeClass("btn-disabled");
+                            $(".keywords-loading").addClass("d-none");
+                        } else {
+
+                        }
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        console.log();
+                    })
+                } else {
+
+                }
+            });
+        });
+
+
+
+
+</script>
+</body>
+
+</html>
