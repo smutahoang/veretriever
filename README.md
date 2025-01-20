@@ -1,6 +1,6 @@
 # VERetriever: Vietnamese-English Cross-lingual Online Evidence Retrieval for Combating Fake News
 
-## Check out our [Online demo](http://veretriever.phapi.io:5500/)
+## Check out our [Online demo](http://veretriever.phapi.io:3000/)
 
 ## Introduction
 
